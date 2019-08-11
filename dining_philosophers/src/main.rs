@@ -1,10 +1,6 @@
+use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
-use std::sync::{Mutex, Arc};
-
-struct Table {
-    forks: Vec<Mutex<()>>,
-}
 
 struct Philosopher {
     name: String,
@@ -16,8 +12,8 @@ impl Philosopher {
     fn new(name: &str, left: usize, right: usize) -> Philosopher {
         Philosopher {
             name: name.to_string(),
-            left,
-            right,
+            left: left,
+            right: right,
         }
     }
 
@@ -30,8 +26,12 @@ impl Philosopher {
 
         thread::sleep(Duration::from_millis(1000));
 
-        println!("{} is done eating.", self.name)
+        println!("{} is done eating.", self.name);
     }
+}
+
+struct Table {
+    forks: Vec<Mutex<()>>,
 }
 
 fn main() {
@@ -42,7 +42,7 @@ fn main() {
             Mutex::new(()),
             Mutex::new(()),
             Mutex::new(()),
-        ]
+        ],
     });
 
     let philosophers = vec![
@@ -53,13 +53,15 @@ fn main() {
         Philosopher::new("Michel Foucault", 0, 4),
     ];
 
-    let handles: Vec<_> = philosophers.into_iter().map(|p| {
-        let table = table.clone();
-
-        thread::spawn(move || {
-            p.eat(&table);
+    let handles: Vec<_> = philosophers
+        .into_iter()
+        .map(|p| {
+            let table = table.clone();
+            thread::spawn(move || {
+                p.eat(&table);
+            })
         })
-    }).collect();
+        .collect();
 
     for h in handles {
         h.join().unwrap();
